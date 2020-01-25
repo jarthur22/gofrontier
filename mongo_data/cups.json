@@ -1,0 +1,15 @@
+{
+    "cups": {
+    "all": [],
+    "custom": [],
+    "boulder": ["rock", "steel", "fighting", "ground"],
+    "twilight": ["dark", "poison", "fairy", "ghost"],
+    "tempest": ["electric", "ice", "flying", "ground"],
+    "kingdom": ["fire", "ice", "dragon", "steel"],
+    "nightmare": ["psychic", "dark", "fighting"],
+    "regionals-1": ["rock", "steel", "fighting", "ground", "dark", "poison", "fairy", "ghost", "electric", "ice", "flying", "fire", "dragon"],
+    "rainbow": ["fire", "water", "grass", "electric", "bug"],
+    "championships-1": [],
+    "jungle": ["normal", "grass", "electric", "bug"]
+    }
+}

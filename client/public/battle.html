@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html style="min-height: 100%;">
+    <head>
+        <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+        <meta charset="UTF-8">
+        <!--<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />-->
+        <!--<meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no"/>-->
+        <title>PVP simulator</title>
+        <script type="text/javascript" src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="data.js"></script>
+        <script type="text/javascript" src="gamemaster.js"></script>
+        <script type="text/javascript" src="default_team.js"></script>
+        <script type="text/javascript" src="battlelogic.js"></script>
+        <script type="text/javascript" src="main.js"></script>
+
+        <link href="style.css" rel="stylesheet">
+
+        <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    </head>
+    <body class="noselect">
+        <div class="addpoke hide">
+            <div class="poke single">             
+                <div class="poke-stats" style="display: block;">
+                    <h3 class="cp">CP <span class="stat">1479</span></h3>
+
+
+                    <div class="advanced-section">
+
+                        <div class="fields">
+
+                            <div class="ivs">
+                                <h3>Level &amp; IV's</h3>
+                                <input class="level" type="number" placeholder="Level" min="1" value='40' max="40" step=".5">
+                                <div class="ivs-group">
+                                    <input class="iv" iv="atk" type="number" placeholder="Atk" value='15' min="0" max="15" step="1"><span>/</span>
+                                    <input class="iv" iv="def" type="number" placeholder="Def" value='15' min="0" max="15" step="1"><span>/</span>
+                                    <input class="iv" iv="hp" type="number" placeholder="HP" value='15' min="0" max="15" step="1">
+                                </div>
+                            </div>
+                            <div class="maximize-section">
+                                <button class="great-stats">Great</button>
+                                <button class="ultra-stats">Ultra</button>
+                                <button class="master-stats">Master</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="move-select-container">
+                        <h3 class="section-title">Fast Move</h3>
+
+                        <select class="move-select fast"><option value="BUBBLE">none</option></select>
+
+                        <h3 class="section-title">Charged Moves</h3>
+
+                        <select id='cmove1select' class="move-select charged"><option value="BUBBLE_BEAM">none</option></select>
+                        <select id='cmove2select' class="move-select charged"><option value="BUBBLE_BEAM">none</option></select>
+                    </div>
+                </div>
+                <div class="center">
+                    <div id='addpokebtn' class="button">Add to pokebox</div>
+                </div>
+            </div>
+        </div>
+        <div class="bgcontainer" style="height:480px; padding-top: 25px; position: relative;">
+            <div id='enemyteam' class="battlestuff">
+                <div class='enemypoke'></div>
+                <div class='enemypoke'></div>
+                <div class='enemypoke'></div>
+            </div>
+            <div id='enemycp'></div>
+            <div id='name1'></div>
+            <div class="hpcontainer battlestuff" style="width:203px" id="hp1container"><div class="hp" style="width:200px" id="hp1"></div></div>
+            <div class="pokeimage battlestuff" id='img1' style='background-image: url("question.PNG")'></div>
+            <img class="battlestuff" src="shield.png" id="shield1" alt="shield">
+            <span id="shieldcount1" class="battlestuff">2</span>
+
+            <a id="ready" class="button button-green noselect">
+                <img src="great.png" style="position: absolute;left:0px;">
+                <strong>Find an opponent (Great league)<br>Players: <span id="playersgreat">0</span></strong>
+            </a>
+
+
+            <img src="shield.png" id="shield2" class="battlestuff" alt="shield">
+            <span id="shieldcount2" class="battlestuff">2</span>
+            <div class="hpcontainer battlestuff" style="width:203px" id="hp2container"><div class="hp" style="width:200px" id="hp2"></div></div>
+            <div class="pokeimage battlestuff" id='img2' style='background-image: url("question.PNG")'></div>
+            <div id="win" style='text-transform: none'></div>
+            <div id="win2" style='text-transform: none'></div>
+            <div id='name2' class="battlestuff"></div>
+        </div>
+        <div id="buttons"  class="bgcontainer battlecontainer">
+            <div id="quickmovecontainer"><b>quick move:</b> <span id="quickmovebtn">mud shot</span></div>
+            <div id="enemyquickmovecontainer"><b>enemy quick move:</b> <span id="enemyquickmovebtn">unknown</span></div>
+            <div id="chargemove1container">
+                <div id="chargemove1btn" class="movebtn noselect rock active"></div>
+                <div id="move1progress" style="height: 60px">                
+                    <div id="move1background" class="rock"></div>
+                </div>
+
+                <div id="chargemove1text" class="">stone edge</div>
+            </div>
+
+            <div id="chargemove2container" >
+                <div id="chargemove2btn" class="movebtn noselect ground"></div>
+                <div id="move2progress" style="height:60px">
+                    <div id="move2background" class="ground"></div>
+                </div>
+                <div id="chargemove2text" class="">earthquake</div>
+            </div>
+
+
+        </div>
+        <div id='switch' class="bgcontainer battlecontainer"><b>switch: </b>
+            <button id='switch1' name="0"></button>
+            <button id='switch2' name="1"></button>
+            <button id='switch3' name="2"></button>
+            <b>cooldown:</b> <span id='cd'>0</span>
+        </div>
+        <div id='lobby' class="bgcontainer" style='text-transform: none'>
+            <div id="playercountcontainer">
+                <b>Players online:</b> <span id="playercount">1</span>
+            </div>
+            <div id="lobbynumbercontainer">
+                <b>Lobby number:</b> <span id="lobbynumber">0</span>/999
+            </div>
+            <div id="playercountinlobbycontainer">
+                <b>Players in your lobby:</b> <span id="playercountinlobby">1</span>/2
+            </div>
+            <div>
+                <b>Lobbies with 1 player:</b> <span id='lobbies1'>none</span><br>
+                <b>Full lobbies:</b> <span id='lobbies2'>none</span>
+            </div>
+        </div>
+
+
+
+
+
+        <script>
+            
+            var battleData = JSON.parse(localStorage.getItem('battleData'));
+            console.log(battleData);
+            var socket;
+            var gm = GameMaster.getInstance();
+            var currentpoke = 0;
+            var currentenemypoke = 0;
+            var started = false;
+            var sentendpacket = false;
+            var switchcd = 0;
+            var team;
+            var enemyteam;
+            var shields = 2;
+            var oshields = 2;
+            var move = "";
+            var opponentshielding = false;
+            var shielding = false;
+            var doingcharge = false;
+            var chargeincoming = false;
+            var winner = -1;
+            var pokebox = localStorage.pokebox ? JSON.parse(localStorage.pokebox) : defaultbox.pokemon;
+            //var socket;
+            var playername = localStorage.name || ("anonymous" + Math.floor(Math.random() * 9999));
+            var turnswaited = 0;
+            var lock = false;
+            var startrecv = false;
+            var afktimer = Date.now();
+            var refreshbtn = "<button onclick='location.reload()'>refresh the page</button>";
+            var teamFitsInGreat = true;
+            var enemyname;
+            var chatlog = "";
+
+            var cd = $("#cd");
+            var shieldcount2 = $("#shieldcount2");
+            var shieldcount1 = $("#shieldcount1");
+            var name2 = $("#name2");
+            var name1 = $("#name1");
+            var img1 = $("#img1");
+            var img2 = $("#img2");
+            var win1 = $("#win");
+            var win2 = $("#win2");
+            $(function () {
+                
+            });
+        </script>
+
+
+
+    </body>
+</html>
