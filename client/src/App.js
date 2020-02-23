@@ -21,12 +21,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    if(window.localStorage.getItem('battleData')){
-      window.localStorage.removeItem('battleData');
-    }
-    if(window.localStorage.getItem('PrivacyPacket')){
-      window.localStorage.removeItem('PrivacyPacket');
-    }
+    window.localStorage.clear()
   }
 
   setCurrentUser = (user) => {
@@ -56,6 +51,7 @@ class App extends Component {
   }
 
   challengeAccepted = (socketId, packet) => {
+    window.localStorage.setItem('PrivacyPacket',JSON.stringify(packet));
     this.setState({challenged: true, otherSocketId: socketId, privacyPacket: packet});
   }
 

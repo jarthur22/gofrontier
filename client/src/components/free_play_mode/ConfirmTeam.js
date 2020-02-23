@@ -4,37 +4,39 @@ import '../../App.css';
 
 class ConfirmTeam extends Component {
 
-    continue = e => {
+    /* continue = e => {
         e.preventDefault();
         //this.props.addFinalBattleData();
         this.props.nextStep();
-    }
+    } */
 
     back = e => {
         e.preventDefault();
         this.props.prevStep();
     }
 
-    sendSocket = () => {
+    openBattle = () => {
         window.localStorage.setItem('battleData', JSON.stringify({
             league: this.props.battleData.league,
             team: this.props.battleData.team,
             currentUser: this.props.battleData.currentUser
         }));
-        axios.post('/api/socket/store', {socket: this.props.battleData.socket.id}).then(res => {
+        //set condition here for privacypacket existing
+        axios.post('/api/socket/store', {socket: this.props.battleData.socket.id, user: this.props.battleData.currentUser._id}).then(res => {
             if(res.status === 200){
                 console.log("success!");
                 this.navigate(`${process.env.PUBLIC_URL}/battle.html`);
+                this.props.nextStep()
             }
-        })
+        }).catch(err => console.log(err)); //add logic here to display that there was a server error
     }
 
     navigate = (href) => {
         var a = document.createElement('a');
         a.href = href;
-        a.target = "_blank"
+        a.target = "_blank";
         a.click();
-     }
+    }
 
 
     render() {
@@ -56,7 +58,7 @@ class ConfirmTeam extends Component {
                     </div>
                 </div>
 
-                <button className="choiceBtn" onClick={this.sendSocket}>Let's GO!</button>
+                <button className="choiceBtn" onClick={this.openBattle}>Let's GO!</button>
                 {/* <a  className="choiceBtn" href={`${process.env.PUBLIC_URL}/battle.html`}>Lets GO!</a> */}
                 <button className="choiceBtn" onClick={this.back}>Go Back</button>
             </div>

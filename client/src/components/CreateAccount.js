@@ -70,7 +70,7 @@ class CreateAccount extends Component {
                         if(res.status === 200){
                             this.setState({created: true});
                         }
-                    })
+                    }).catch(err => console.log(err));
                 } else {
                     this.setState({errText: "There was an error with the information you entered."});
                 }

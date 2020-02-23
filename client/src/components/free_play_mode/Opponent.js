@@ -27,11 +27,11 @@ class Opponent extends Component {
                 awaiting1: currentUser._id,
                 awaiting2: friend._id
             });
-            this.props.setPrivacyPacket({
+            /* this.props.setPrivacyPacket({
                 status: true,
                 awaiting1: currentUser._id,
                 awaiting2: friend._id
-            });
+            }); */
             this.setState({challengeSent: true});
             this.props.setFriend(friend);
         });

@@ -1,15 +1,921 @@
-{
-    "cups": {
-    "all": [],
-    "custom": [],
-    "boulder": ["rock", "steel", "fighting", "ground"],
-    "twilight": ["dark", "poison", "fairy", "ghost"],
-    "tempest": ["electric", "ice", "flying", "ground"],
-    "kingdom": ["fire", "ice", "dragon", "steel"],
-    "nightmare": ["psychic", "dark", "fighting"],
-    "regionals-1": ["rock", "steel", "fighting", "ground", "dark", "poison", "fairy", "ghost", "electric", "ice", "flying", "fire", "dragon"],
-    "rainbow": ["fire", "water", "grass", "electric", "bug"],
-    "championships-1": [],
-    "jungle": ["normal", "grass", "electric", "bug"]
-    }
-}
+[
+  {
+    "name": "all",
+    "title": "All Pokemon",
+    "include": [],
+    "exclude": []
+  },
+  {
+    "name": "custom",
+    "title": "Custom",
+    "include": [],
+    "exclude": []
+  },
+  {
+    "name": "gen-5",
+    "title": "Generation 5",
+    "include": [],
+    "exclude": []
+  },
+  {
+    "name": "gobattleleague",
+    "title": "GO Battle League",
+    "include": [],
+    "exclude": []
+  },
+  {
+    "name": "boulder",
+    "title": "Boulder Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "rock",
+          "steel",
+          "fighting",
+          "ground"
+        ]
+      }
+    ],
+    "exclude": []
+  },
+  {
+    "name": "twilight",
+    "title": "Twilight Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "dark",
+          "poison",
+          "fairy",
+          "ghost"
+        ]
+      }
+    ],
+    "exclude": []
+  },
+  {
+    "name": "tempest",
+    "title": "Tempest Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "electric",
+          "ice",
+          "flying",
+          "ground"
+        ]
+      }
+    ],
+    "exclude": []
+  },
+  {
+    "name": "kingdom",
+    "title": "Kingdom Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "fire",
+          "ice",
+          "dragon",
+          "steel"
+        ]
+      }
+    ],
+    "exclude": []
+  },
+  {
+    "name": "nightmare",
+    "title": "Nightmare Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "psychic",
+          "dark",
+          "fighting"
+        ]
+      }
+    ],
+    "exclude": [
+      {
+        "filterType": "tag",
+        "values": [
+          "mythical",
+          "legendary"
+        ]
+      },
+      {
+        "filterType": "id",
+        "values": [
+          "medicham",
+          "sableye"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "regionals-1",
+    "title": "Season 1 Regionals",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "rock",
+          "steel",
+          "fighting",
+          "ground",
+          "dark",
+          "poison",
+          "fairy",
+          "ghost",
+          "electric",
+          "ice",
+          "flying",
+          "fire",
+          "dragon"
+        ]
+      }
+    ],
+    "exclude": []
+  },
+  {
+    "name": "championships-1",
+    "title": "Season 1 Championships",
+    "include": [],
+    "exclude": [
+      {
+        "filterType": "tag",
+        "values": [
+          "mythical",
+          "legendary"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "rainbow",
+    "title": "Rainbow Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "fire",
+          "water",
+          "electric",
+          "grass",
+          "bug"
+        ]
+      },
+      {
+        "filterType": "dex",
+        "values": [
+          1,
+          251
+        ]
+      }
+    ],
+    "exclude": [
+      {
+        "filterType": "tag",
+        "values": [
+          "alolan"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "jungle",
+    "title": "Jungle Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "normal",
+          "grass",
+          "bug",
+          "electric"
+        ]
+      }
+    ],
+    "exclude": [
+      {
+        "filterType": "id",
+        "values": [
+          "tropius",
+          "wormadam_trash",
+          "wormadam_sandy",
+          "wormadam_plant",
+          "mothim"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "safari",
+    "title": "Safari Cup",
+    "restrictedPicks": 2,
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "grass",
+          "ground",
+          "rock",
+          "bug",
+          "normal",
+          "poison",
+          "flying",
+          "water"
+        ]
+      },
+      {
+        "filterType": "dex",
+        "values": [
+          1,
+          493
+        ]
+      }
+    ],
+    "exclude": []
+  },
+  {
+    "name": "fantasy",
+    "title": "Fantasy Cup",
+    "restrictedPicks": 1,
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "bug",
+          "dark",
+          "fighting",
+          "poison",
+          "fairy",
+          "ghost",
+          "psychic"
+        ]
+      }
+    ],
+    "exclude": []
+  },
+  {
+    "name": "cliffhanger",
+    "title": "Cliffhanger",
+    "include": [],
+    "exclude": []
+  },
+  {
+    "name": "sinister",
+    "title": "Sinister Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "ghost",
+          "psychic",
+          "fighting",
+          "steel"
+        ]
+      }
+    ],
+    "exclude": [
+      {
+        "filterType": "id",
+        "values": [
+          "skarmory",
+          "hypno"
+        ]
+      },
+      {
+        "filterType": "tag",
+        "values": [
+          "mythical"
+        ]
+      },
+      {
+        "filterType": "type",
+        "values": [
+          "dark"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ferocious",
+    "title": "Ferocious Cup",
+    "include": [
+      {
+        "filterType": "id",
+        "values": [
+          "absol",
+          "aggron",
+          "ampharos",
+          "arcanine",
+          "aron",
+          "bagon",
+          "bibarel",
+          "bidoof",
+          "blitzle",
+          "buizel",
+          "buneary",
+          "camerupt",
+          "cranidos",
+          "cubone",
+          "delcatty",
+          "donphan",
+          "drillbur",
+          "eevee",
+          "electrike",
+          "entei",
+          "espeon",
+          "excadrill",
+          "exploud",
+          "flaaffy",
+          "flareon",
+          "floatzel",
+          "furret",
+          "gabite",
+          "garchomp",
+          "gible",
+          "girafarig",
+          "glaceon",
+          "glameow",
+          "granbull",
+          "growlithe",
+          "grumpig",
+          "heatmor",
+          "herdier",
+          "hippopotas",
+          "hippowdon",
+          "houndoom",
+          "houndour",
+          "jolteon",
+          "kangaskhan",
+          "lairon",
+          "larvitar",
+          "lickilicky",
+          "lickitung",
+          "liepard",
+          "lillipup",
+          "linoone",
+          "lopunny",
+          "luxio",
+          "luxray",
+          "mamoswine",
+          "manectric",
+          "mareep",
+          "marowak",
+          "marowak_alolan",
+          "meowth",
+          "meowth_alolan",
+          "mightyena",
+          "miltank",
+          "minun",
+          "nidoking",
+          "nidoqueen",
+          "nidoran_female",
+          "nidoran_male",
+          "nidorina",
+          "nidorino",
+          "ninetales",
+          "ninetales_alolan",
+          "numel",
+          "pachirisu",
+          "patrat",
+          "persian",
+          "persian_alolan",
+          "phanpy",
+          "pichu",
+          "pikachu",
+          "piloswine",
+          "plusle",
+          "ponyta",
+          "poochyena",
+          "pupitar",
+          "purrloin",
+          "purugly",
+          "raichu",
+          "raichu_alolan",
+          "raikou",
+          "rampardos",
+          "rapidash",
+          "raticate",
+          "raticate_alolan",
+          "rattata",
+          "rattata_alolan",
+          "rhydon",
+          "rhyhorn",
+          "rhyperior",
+          "sandslash",
+          "sandslash_alolan",
+          "sandshrew",
+          "sandshrew_alolan",
+          "sentret",
+          "shelgon",
+          "shinx",
+          "skitty",
+          "skuntank",
+          "smeargle",
+          "sneasel",
+          "spoink",
+          "stantler",
+          "stoutland",
+          "stunky",
+          "suicune",
+          "swinub",
+          "tauros",
+          "teddiursa",
+          "torkoal",
+          "tyranitar",
+          "umbreon",
+          "ursaring",
+          "vaporeon",
+          "vulpix",
+          "vulpix_alolan",
+          "watchog",
+          "weavile",
+          "zangoose",
+          "zebstrika",
+          "zigzagoon"
+        ]
+      }
+    ],
+    "exclude": []
+  },
+  {
+    "name": "timeless",
+    "title": "Timeless Cup",
+    "restrictedPicks": 1,
+    "restrictedPokemon": [
+      "bulbasaur",
+      "ivysaur",
+      "venusaur",
+      "squirtle",
+      "wartortle",
+      "blastoise",
+      "charmander",
+      "charmeleon",
+      "charizard",
+      "chikorita",
+      "bayleef",
+      "meganium",
+      "totodile",
+      "croconaw",
+      "feraligatr",
+      "cyndaquil",
+      "quilava",
+      "typhlosion",
+      "treecko",
+      "grovyle",
+      "sceptile",
+      "mudkip",
+      "marshtomp",
+      "swampert",
+      "torchic",
+      "combusken",
+      "blaziken",
+      "turtwig",
+      "grotle",
+      "torterra",
+      "piplup",
+      "prinplup",
+      "empoleon",
+      "chimchar",
+      "monferno",
+      "infernape"
+    ],
+    "include": [
+      {
+        "filterType": "dex",
+        "values": [
+          1,
+          488
+        ]
+      },
+      {
+        "filterType": "id",
+        "values": [
+          "blaziken",
+          "charizard",
+          "infernape",
+          "empoleon",
+          "monferno",
+          "prinplup",
+          "combusken"
+        ]
+      }
+    ],
+    "exclude": [
+      {
+        "filterType": "tag",
+        "values": [
+          "legendary",
+          "mythical",
+          "alolan"
+        ]
+      },
+      {
+        "filterType": "type",
+        "values": [
+          "fighting",
+          "flying",
+          "normal",
+          "psychic",
+          "steel",
+          "fairy"
+        ]
+      },
+      {
+        "filterType": "id",
+        "values": [
+          "umbreon",
+          "sableye"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "fusion",
+    "title": "Fusion Cup",
+    "include": [],
+    "exclude": [
+      {
+        "filterType": "tag",
+        "values": [
+          "legendary",
+          "mythical"
+        ]
+      },
+      {
+        "filterType": "type",
+        "values": [
+          "none"
+        ]
+      },
+      {
+        "filterType": "id",
+        "values": [
+          "azumarill",
+          "medicham",
+          "dewgong",
+          "wormadam_trash",
+          "wormadam_plant",
+          "wormadam_sandy",
+          "hypno",
+          "munchlax",
+          "linoone",
+          "onix",
+          "hitmonlee",
+          "hitmonchan",
+          "chansey",
+          "mr.mime",
+          "scyther",
+          "jynx",
+          "electabuzz",
+          "magmar",
+          "pinsir",
+          "lapras",
+          "eevee",
+          "vaporeon",
+          "jolteon",
+          "flareon",
+          "omanyte",
+          "omastar",
+          "kabuto",
+          "kabutops",
+          "aerodactyl",
+          "snorlax",
+          "dratini",
+          "dragonair",
+          "dragonite",
+          "mareep",
+          "flaafy",
+          "ampharos",
+          "sudowoodo",
+          "espeon",
+          "umbreon",
+          "pineco",
+          "forretress",
+          "gligar",
+          "steelix",
+          "scizor",
+          "delibir",
+          "mantine",
+          "skarmory",
+          "hitmontop",
+          "miltank",
+          "blissey",
+          "larvitar",
+          "pupitar",
+          "tyranitar",
+          "ralts",
+          "kirlia",
+          "gardevoir",
+          "slakoth",
+          "vigoroth",
+          "slaking",
+          "nincada",
+          "ninjask",
+          "sableye",
+          "mawile",
+          "trapinch",
+          "vibrava",
+          "flygon",
+          "milotic",
+          "castform",
+          "castform_sunny",
+          "castform_rainy",
+          "castform_snowy",
+          "tropius",
+          "chimecho",
+          "absol",
+          "relicanth",
+          "bagon",
+          "shelgon",
+          "salamence",
+          "metang",
+          "metagross",
+          "shinx",
+          "luxio",
+          "luxray",
+          "cranidos",
+          "rampardos",
+          "shieldon",
+          "bastiodon",
+          "pachirisu",
+          "drifloon",
+          "drifblim",
+          "chatot",
+          "spiritomb",
+          "gible",
+          "gabite",
+          "garchomp",
+          "lucario",
+          "skorupi",
+          "drapion",
+          "carnivine",
+          "electivire",
+          "magmortar",
+          "leafeon",
+          "glaceon",
+          "gliscor",
+          "gallade",
+          "ferroseed",
+          "ferrothorn",
+          "klink",
+          "klang",
+          "klinklang",
+          "litwick",
+          "lampent",
+          "chandelure",
+          "golett",
+          "golurk",
+          "deino",
+          "zweilous",
+          "hydreigon",
+          "mr_mime",
+          "tirtouga",
+          "carracosta",
+          "archeops",
+          "archen",
+          "scraggy",
+          "scrafty"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "rose",
+    "title": "Rose Cup",
+    "include": [
+      {
+        "filterType": "id",
+        "values": [
+          "charmander",
+          "charmeleon",
+          "charizard",
+          "vileplume",
+          "paras",
+          "parasect",
+          "voltorb",
+          "electrode",
+          "jynx",
+          "magmar",
+          "flareon",
+          "ledyba",
+          "ledian",
+          "ariados",
+          "yanma",
+          "scizor",
+          "slugma",
+          "magcargo",
+          "delibird",
+          "porygon2",
+          "magby",
+          "torchic",
+          "combusken",
+          "blaziken",
+          "wurmple",
+          "medicham",
+          "camerupt",
+          "solrock",
+          "castform_sunny",
+          "kricketot",
+          "kricketune",
+          "wormadam_trash",
+          "magmortar",
+          "porygon_z",
+          "tepig",
+          "pignite",
+          "emboar",
+          "pansear",
+          "simisear",
+          "heatmor",
+          "rattata",
+          "ekans",
+          "arbok",
+          "nidoran_male",
+          "nidorino",
+          "nidoking",
+          "zubat",
+          "golbat",
+          "venonat",
+          "venomoth",
+          "grimer",
+          "muk",
+          "gastly",
+          "haunter",
+          "gengar",
+          "marowak_alolan",
+          "koffing",
+          "weezing",
+          "aerodactyl",
+          "crobat",
+          "aipom",
+          "espeon",
+          "forretress",
+          "gligar",
+          "granbull",
+          "tyrogue",
+          "cascoon",
+          "delcatty",
+          "sableye",
+          "illumise",
+          "swalot",
+          "grumpig",
+          "lileep",
+          "cherrim_overcast",
+          "ambipom",
+          "drifloon",
+          "drifblim",
+          "mismagius",
+          "stunky",
+          "skuntank",
+          "spiritomb",
+          "skorupi",
+          "gliscor",
+          "purrloin",
+          "liepard",
+          "clefairy",
+          "clefable",
+          "jigglypuff",
+          "wigglytuff",
+          "exeggcute",
+          "mr_mime",
+          "porygon",
+          "cleffa",
+          "igglybuff",
+          "flaaffy",
+          "hoppip",
+          "snubbull",
+          "smoochum",
+          "miltank",
+          "blissey",
+          "whismur",
+          "skitty",
+          "cherubi",
+          "cherrim_sunny",
+          "happiny",
+          "lickilicky",
+          "drapion",
+          "lickitung",
+          "throh",
+          "venipede",
+          "whirlipede",
+          "scolipede",
+          "throh",
+          "dwebble",
+          "crustle",
+          "shelmet",
+          "accelgor",
+          "machoke",
+          "machop",
+          "machamp",
+          "geodude_alolan",
+          "graveler_alolan",
+          "golem_alolan",
+          "magnemite",
+          "magneton",
+          "onix",
+          "weezing_galarian",
+          "rhyhorn",
+          "rhydon",
+          "misdreavus",
+          "pineco",
+          "steelix",
+          "remoraid",
+          "skarmory",
+          "donphan",
+          "pupitar",
+          "poochyena",
+          "mightyena",
+          "nincada",
+          "nosepass",
+          "aron",
+          "lairon",
+          "aggron",
+          "volbeat",
+          "anorith",
+          "armaldo",
+          "castform",
+          "snorunt",
+          "glalie",
+          "glameow",
+          "purugly",
+          "magnezone",
+          "rhyperior",
+          "probopass",
+          "herdier",
+          "stoutland",
+          "pidove",
+          "tranquill",
+          "unfezant",
+          "drilbur",
+          "excadrill",
+          "timburr",
+          "gurdurr",
+          "whirlipede",
+          "escavalier",
+          "ferroseed",
+          "ferrothorn",
+          "klink",
+          "klang",
+          "klinklang",
+          "durant",
+          "chansey",
+          "minccino",
+          "cinccino",
+          "darumaka",
+          "darmanitan_standard",
+          "scrafty"
+        ]
+      }
+    ],
+    "exclude": [
+      {
+        "filterType": "type",
+        "values": [
+          "water"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "toxic",
+    "title": "Toxic Cup",
+    "include": [
+      {
+        "filterType": "type",
+        "values": [
+          "bug",
+          "poison",
+          "normal",
+          "ground",
+          "grass"
+        ]
+      }
+    ],
+    "exclude": [
+      {
+        "filterType": "id",
+        "values": [
+          "noctowl",
+          "vigoroth",
+          "tropius",
+          "whiscash",
+          "swampert",
+          "quagsire",
+          "gastrodon_east_sea",
+          "gastrodon_west_sea",
+          "seismitoad",
+          "palpitoad",
+          "marshtomp"
+        ]
+      }
+    ]
+  }
+]

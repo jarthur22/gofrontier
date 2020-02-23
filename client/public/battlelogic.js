@@ -1,25 +1,25 @@
 function convertToDamage(move, attacking) {
     var user = attacking ? team[currentpoke] : enemyteam[currentenemypoke];
     var receiver = !attacking ? team[currentpoke] : enemyteam[currentenemypoke];
-    var pokedata = gm.getPokemonById(user.name);
-    var movedata = gm.getMoveById(move);
+    //var pokedata = gm.getPokemonById(user.name);
+    //var movedata = gm.getMoveById(move);
 
     var bonusMultiplier = 1.3;
-    var power = movedata.power;
-    var effectiveness = getEffectiveness(movedata.type, gm.getPokemonById(receiver.name).types);
-    let stab = moveGetsSTAB(movedata, pokedata);
-    var atk = user.atk;
-    var def = receiver.def;
+    var power = move.power;
+    var effectiveness = getEffectiveness(move.type, receiver.types);
+    let stab = moveGetsSTAB(move, user);
+    var atk = user.stats.atk;
+    var def = receiver.stats.def;
 
-    var atkboosts = boostMultiplier(user.atkboosts);
-    var defboosts = boostMultiplier(receiver.defboosts);
+    var atkboosts = boostMultiplier(attacking ? boosts.atk[currentpoke] : oboosts.atk[currentenemypoke]);
+    var defboosts = boostMultiplier(!attacking ? boosts.def[currentpoke] : oboosts.def[currentenemypoke]);
     var totalboosts = atkboosts / defboosts;
 
 
     var damage = Math.floor(totalboosts * power * stab * (atk / def) * effectiveness * 0.5 * bonusMultiplier) + 1;
     if (damage > 5) {
-        //console.log(damage);
-        //console.log(atkboosts);
+        console.log(damage);
+        console.log(atkboosts);
     }
     return damage;
 }
@@ -71,7 +71,8 @@ function moveGetsSTAB(move, user) {
     return stab;
 }
 function convertToEnergy(move) {
-    var m = gm.getMoveById(move);
+    //var m = gm.getMoveById(move);
+    var m = move
     return m.energyGain - m.energy;
 }
 
@@ -199,7 +200,7 @@ var cpms = [0.094, 0.135137432, 0.16639787, 0.192650919, 0.21573247, 0.236572661
 
 
 
-function maxTradeLevel(poke) {
+/* function maxTradeLevel(poke) {
     console.log(poke);
     var p = gm.getPokemonById(poke);
     console.log(p.speciesId);
@@ -227,7 +228,7 @@ function maxTradeLevel(poke) {
         prev = level;
     }
     return res;
-}
+} */
 
 function findPoke(poke) {
     var p = gm.getPokemonById(poke);
@@ -248,11 +249,11 @@ function findPoke(poke) {
     }
     return p;
 }
-function calcCP(poke, level, atk, def, hp) {
+/* function calcCP(poke, level, atk, def, hp) {
     var g = gm.getPokemonById(poke);
     var bs = g.baseStats;
     var cpm = cpms[(level - 1) * 2];
     var cp = (bs.atk + atk) * Math.sqrt(bs.def + def) * Math.sqrt(bs.hp + hp) * cpm * cpm * 0.1;
     //console.log("calccp: " + g.speciesId + " " + Math.floor(cp));
     return Math.floor(cp);
-}
+} */

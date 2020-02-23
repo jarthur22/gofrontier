@@ -4,7 +4,7 @@ import axios from 'axios';
 import Pokebox from './Pokebox';
 import ConfirmTeam from './ConfirmTeam';
 import Opponent from './Opponent';
-//import Battle from '../battle/Battle';
+import EndGame from '../battle/EndGame';
 import '../../App.css';
 import openSocket from 'socket.io-client';
 
@@ -46,6 +46,7 @@ class FreePlayMode extends Component {
     }
 
     componentWillUnmount() {
+        window.localStorage.clear();
         this._isMounted = false;
         const {socket} = this.state;
         socket.off('lobbypos');
@@ -135,6 +136,11 @@ class FreePlayMode extends Component {
         socket.on('connect', () => {
             console.log(socket);
             socket.emit('attachuser', {_id: currentUser._id});
+            
+        });
+
+        socket.on('attached', () => {
+            socket.emit("migrateuser", {});
         });
 
         if(challenged){
@@ -190,11 +196,9 @@ class FreePlayMode extends Component {
                 )
             case 4:
                 return(
-                    {/* <Battle
-                        prevStep={this.prevStep} //probably won't use this
-                        battleData={battleData}
-                        privacyPacket={this.props.privacyPacket}
-                    /> */}
+                    <EndGame className="freeplaycomponent"
+                        id={currentUser.username}
+                    />
                 )
             default:
                 return(

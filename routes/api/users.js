@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../../models/User');
 const app = express();
+const crypto = require('crypto');
 
 
 //Modify the user request used for login, so that if the user is logged in
@@ -10,7 +11,11 @@ const app = express();
 // @desc Get all users
 // @access Public
 app.get('/', (req, res) => {
-    User.find().then(users => res.json(users)).catch(err => res.json(err));
+    User.find().then(users => res.json(users.map(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        return user;
+    }))).catch(err => res.json(err));
 });
 
 // @route /api/users/name/:username
@@ -18,7 +23,8 @@ app.get('/', (req, res) => {
 // @access Public
 app.get('/name/:username', (req, res) => {
     User.find({username: req.params.username})
-    .then(results => results.length > 0 ? res.json(results[0]): res.sendStatus(400))
+    //.then(results => results.length > 0 ? res.json(results[0]): res.sendStatus(400))
+    .then(results => results.length > 0 ? res.sendStatus(200): res.sendStatus(400))
     .catch(err => res.json(err));
 });
 
@@ -29,7 +35,11 @@ app.get('/search/:username', (req, res) => {
     var name = JSON.stringify(req.params.username);
     name = JSON.parse(name.toLowerCase());
     User.find({usernameNCS: {$regex: name}})
-    .then(results => res.json(results))
+    .then(results => res.json(results.map(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        return user;
+    })))
     .catch(err => res.json(err));
 });
 
@@ -37,24 +47,34 @@ app.get('/search/:username', (req, res) => {
 // @desc Get one user by email
 // @access Public
 app.get('/email/:email', (req, res) => {
-    User.find({email: req.params.email}).then(results => results.length > 0 ? res.json(results[0]): res.sendStatus(400)).catch(err => res.json(err));
+    //User.find({email: req.params.email}).then(results => results.length > 0 ? res.json(results[0]): res.sendStatus(400)).catch(err => res.json(err));
+    User.find({email: req.params.email}).then(results => results.length > 0 ? res.sendStatus(200): res.sendStatus(400)).catch(err => res.json(err));
 });
 
 //@route /api/users/:id
 // @desc Get user by Id
 // @access Public
 app.get('/:id', (req, res) => {
-    User.findById(req.params.id).then(user => res.json(user)).catch(err => res.json(err));
+    User.findById(req.params.id).then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/users/add
 // @desc Post user
 // @access Public
 app.post('/add', (req, res) => {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(req.body.password, salt, 1000, 64, `sha512`).toString(`hex`);
+    console.log(salt);
+    console.log(hash);
     const newUser = new User({
         username: req.body.username,
         usernameNCS: req.body.username.toLowerCase(),
-        password: req.body.password,
+        hash: hash,
+        salt: salt,
         email: req.body.email,
         pokebox: req.body.pokebox,
         teams: req.body.teams,
@@ -63,7 +83,49 @@ app.post('/add', (req, res) => {
         challenges: req.body.challenges,
         favorite: req.body.favorite
     });
-    newUser.save().then(user => res.json(user)).catch(err => res.json(err));
+    /* var newUser = new User();
+    newUser.username = req.body.username;
+    newUser.usernameNCS = req.body.username.toLowerCase();
+    newUser.email = req.body.email;
+    newUser.pokebox = req.body.pokebox;
+    newUser.teams = req.body.teams;
+    newUser.friends = req.body.friends;
+    newUser.requests = req.body.requests;
+    newUser.challenges = req.body.challenges;
+    newUser.favorite = req.body.favorite;
+    newUser.setPassword(req.body.password); */
+    newUser.save().then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
+});
+
+//@route /api/users/login
+//@desc Attempt to login
+//@access Public
+app.post('/login', (req, res) => {
+    User.find({username: req.body.username})
+    //results.length > 0 ? res.json(results[0]): res.sendStatus(400)
+    .then(results => {
+        if(results.length < 1){
+            res.json({message: "User not found."});
+        } else if(results[0].salt){
+            var user = results[0];
+            const hashedReq = crypto.pbkdf2Sync(req.body.password, user.salt, 1000, 64, `sha512`).toString(`hex`);
+            const validPassword = user.hash === hashedReq;
+            if(validPassword){
+                user.hash = undefined;
+                user.salt = undefined;
+                res.json(user);
+            } else {
+                res.json({message: "Incorrect Password."});
+            }
+        } else {
+            res.json({message: "This is an old, non-secure user account. Please create a new account."})
+        }
+    })
+    .catch(err => console.log(err));
 });
 
 // @route /api/users/pokebox/:id
@@ -79,7 +141,11 @@ app.get('/pokebox/:id', (req, res) => {
 // @access Public
 app.post('/update/addbox/:id', (req, res) => {
     User.findByIdAndUpdate(req.params.id, {$push: {pokebox: req.body}}, {new: true})
-    .then(user => res.json(user)).catch(err => res.json(err));
+    .then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/users/update/addteam/:id
@@ -87,7 +153,11 @@ app.post('/update/addbox/:id', (req, res) => {
 //@access Public
 app.post('/update/addteam/:id', (req, res) => {
     User.findByIdAndUpdate(req.params.id, {$push: {teams: req.body}}, {new: true})
-    .then(user => res.json(user)).catch(err => res.json(err));
+    .then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 
@@ -97,7 +167,11 @@ app.post('/update/addteam/:id', (req, res) => {
 app.post('/update/updateteam/:id', (req, res) => {
     User.findOneAndUpdate({_id: req.params.id, 'teams.id': req.body.id},
     {$set: {'teams.$': req.body}}, {new: true})
-    .then(user => res.json(user)).catch(err => res.json(err));
+    .then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/users/friends/:id
@@ -163,13 +237,19 @@ app.post('/requests/accept/:id', (req, res) => {
             username: firstUsername
         }}}, {new: true})
         .then(userRes => {
+            userRes.hash = undefined;
+            userRes.salt = undefined;
             user2 = userRes;
         }).catch(err => res.json(err));
-        User.findByIdAndUpdate(req.params.id, {$pull: {requests: req.body}}).then(user => res.json({
-            user1: user,
-            user2: user2,
-            success: true
-        })).catch(err => res.json({
+        User.findByIdAndUpdate(req.params.id, {$pull: {requests: req.body}}).then(user => {
+            user.hash = undefined;
+            user.salt = undefined;
+            res.json({
+                user1: user,
+                user2: user2,
+                success: true
+            });
+        }).catch(err => res.json({
             err: err,
             success: false
         }));
@@ -184,7 +264,11 @@ app.post('/requests/accept/:id', (req, res) => {
 // @desc Deny friend request for user with given id, request in body
 // @access Public
 app.post('/requests/deny/:id', (req, res) => {
-    User.findByIdAndUpdate(req.params.id, {$pull: {requests: req.body}}).then(user => res.json(user)).catch(err => res.json(err));
+    User.findByIdAndUpdate(req.params.id, {$pull: {requests: req.body}}).then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/users/friends/remove/:id
@@ -192,10 +276,16 @@ app.post('/requests/deny/:id', (req, res) => {
 // @access Public
 app.post('/friends/remove/:id', (req, res) => {
     User.findByIdAndUpdate(req.params.id, {$pull: {friends: req.body}}).then(user1 => {
+        user1.hash = undefined;
+        user1.salt = undefined;
         User.findByIdAndUpdate(req.body._id, {$pull: {friends: {
             _id: user1._id,
             username: user1.username
-        }}}).then(user2 => res.json({user1, user2, success: true})).catch(err => res.json(err));
+        }}}).then(user2 => {
+            user2.hash = undefined;
+            user2.salt = undefined;
+            res.json({user1, user2, success: true})
+        }).catch(err => res.json(err));
     }).catch(err => res.json(err));
 });
 
@@ -216,14 +306,22 @@ app.post('/battle/send/:id', (req, res) => {
 // @desc deny a battle request
 // @access Public
 app.post('/battle/deny/:id', (req, res) => {
-    User.findByIdAndUpdate(req.params.id, {$pull: {challenges: req.body}}).then(user => res.json(user)).catch(err => res.json(err));
+    User.findByIdAndUpdate(req.params.id, {$pull: {challenges: req.body}}).then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/users/battle/accept/:id
 // @desc accept a battle request
 // @access Public
 app.post('/battle/accept/:id', (req, res) => {
-    User.findByIdAndUpdate(req.params.id, {$pull: {challenges: req.body}}).then(user => res.json(user)).catch(err => res.json(err));
+    User.findByIdAndUpdate(req.params.id, {$pull: {challenges: req.body}}).then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/users/update/email/:id
@@ -231,7 +329,11 @@ app.post('/battle/accept/:id', (req, res) => {
 // @access Public
 app.post('/update/email/:id', (req, res) => {
     User.findByIdAndUpdate(req.params.id, {$set: {email: req.body.email}}, {new: true})
-    .then(user => res.json(user)).catch(err => res.json(err));
+    .then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/users/update/password/:id
@@ -239,7 +341,11 @@ app.post('/update/email/:id', (req, res) => {
 // @access Public
 app.post('/update/password/:id', (req, res) => {
     User.findByIdAndUpdate(req.params.id, {$set: {password: req.body.password}}, {new: true})
-    .then(user => res.json(user)).catch(err => res.json(err));
+    .then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/uisers/update/favorite/:id
@@ -247,7 +353,11 @@ app.post('/update/password/:id', (req, res) => {
 // @access Public
 app.post('/update/favorite/:id', (req, res) => {
     User.findByIdAndUpdate(req.params.id, {$set: {favorite: req.body.favorite}}, {new: true})
-    .then(user => res.json(user)).catch(err => res.json(err));
+    .then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 module.exports = app;

@@ -1,4 +1,3 @@
-
 $(function () {
 
     socket = window.location.href.includes("heroku") ?
@@ -6,9 +5,12 @@ $(function () {
         io.connect('http://localhost:4000/')
 
     console.log(socket);
+    //socket.emit('migrateuser', {});
+    socket.emit('battleconnection', {id: socket.id, privacyPacket: {status: false}, user: battleData.currentUser._id});
+    
+    
 
-
-    function initteam(teamdata) { //parse team json and set team variables
+    /* function initteam(teamdata) { //parse team json and set team variables
         var team2 = [];
         team2.push(JSON.parse(JSON.stringify(teamdata))[0]);
         team2.push(JSON.parse(JSON.stringify(teamdata))[1]);
@@ -40,14 +42,34 @@ $(function () {
             team2[i].cmove2 = cmove2;
             team2[i].cp = calcCP(p.speciesId, team2[i].level, team2[i].individualAttack, team2[i].individualDefense, team2[i].individualStamina);
         }
-        return team2;
-    }
+        return team2; 
+    } */
 
-    setTimeout(function () { //HERE is where the json from api call will be served!
+    /* setTimeout(function () { //HERE is where the json from api call will be served!
         //get user and call team data from api then store
         team = initteam(defaultbox.pokemon);
         enemyteam = initteam(defaultbox.pokemon);
-    }, 1);
+        team = battleData.team;
+        //enemyteam = battleData.team;
+    }, 1); */
+
+    socket.on('connected', () => {
+
+        $("#poptext p").text("Waiting for opponent!");
+        if (battleData.league === "Great" && !startrecv){
+            console.log('Sending great league request...');
+            var privacyPacket = window.localStorage.getItem('PrivacyPacket') ? JSON.parse(window.localStorage.getItem('PrivacyPacket')) : {status: false};
+            console.log(privacyPacket);
+            socket.emit('lobbyrequest', {num: 199, privacyPacket: privacyPacket}); //pass invite in here, make invite an object that both players need to have!
+            console.log(socket.id);
+            socket.emit('ready', {id: socket.id});
+        }
+        else if(battleData.league === "Master" && !startrecv){
+            socket.emit('lobbyrequest', {num: 5099, privacyPacket: privacyPacket});
+            console.log(socket);
+            socket.emit('ready', {id: socket.id});
+        }
+    });
 
     socket.on('lobbypos', function (data) { //socket for lobby position
         $("#lobbynumber").text(data.lobbypos + 1);
@@ -56,8 +78,12 @@ $(function () {
         $("#lobbies1").text(data.lobbies1 === "" ? "none" : data.lobbies1);
         $("#lobbies2").text(data.lobbies2 === "" ? "none" : data.lobbies2);
         if (data.count === 1 && startrecv) {
-            display("the enemy disconnected, " + refreshbtn);
+            //display("Opponent Disconnected. \n" + refreshbtn);
+            display("Opponent Disconnected. \n You may now close this page.");
+            //when leaderboards are a thing, send through socket here
             socket.disconnect();
+            //code here to send status back to react, for both players?
+            window.localStorage.setItem("winner", playername);
             started = false;
         }
         $("#playercountinlobby").text(data.count);
@@ -66,6 +92,7 @@ $(function () {
 
     socket.on('dmg',  //socket for dmg dealt
             function (data) {
+                console.log('damage');
                 if (!started)
                     return;
                 //console.log("Got: " + data.move);
@@ -89,29 +116,29 @@ $(function () {
                 setTimeout(function () {
                     if (!chargeincoming)
                         animate(1);
-                    team[currentpoke].hp -= shielding ? 1 : dmg;
+                    currentHP[currentpoke] -= shielding ? 1 : dmg;
 
 
                     updateHP();
-                    var movedata = gm.getMoveById(data.move);
+                    //var movedata = gm.getMoveById(data.move);
 
-                    //acid spray
+                    //acid spray 
                     //console.log(movedata);
-                    if (movedata.buffApplyChance && movedata.buffApplyChance === 1) {
+                    if (move.buffApplyChance && move.buffApplyChance === 1) {
                         //console.log(movedata);
-                        if (movedata.buffTarget === "opponent") {
-                            team[currentpoke].atkboosts += movedata.buffs[0];
-                            team[currentpoke].defboosts += movedata.buffs[1];
+                        if (move.buffTarget === "opponent") {
+                            boosts.atk[currentpoke] += move.buffs[0];
+                            boosts.def[currentpoke] += move.buffs[1];
                         } else {
-                            enemyteam[currentenemypoke].atkboosts += movedata.buffs[0];
-                            enemyteam[currentenemypoke].defboosts += movedata.buffs[1];
+                            oboosts.atk[currentenemypoke] += move.buffs[0];
+                            oboosts.def[currentenemypoke] += move.buffs[1];
                         }
                         limitboosts();
                     }
 
                     if (chargeincoming) {
                         //display("the charge move was " + data.move.toLowerCase().replace("_", " "));
-                        display2("the charge move was " + data.move.toLowerCase().replace("_", " ").replace("_", " "));
+                        display2("the charge move was " + data.move.name);
                         setTimeout(function () {
                             if ($("#win2").html().includes("the charge move was "))
                                 display2("");
@@ -144,46 +171,63 @@ $(function () {
         updateMoveButtons();
         if ($("#win").html().includes("the opponent is choosing their next pokemon!"))
             display("");
+        /* $("img1").html('<img alt="" src={' + process.env.PUBLIC_URL + '/sprites/' + 
+            this.state.enemyteam[this.currentenemypoke].speciesId.replace("_", "-").replace("alolan", "alola")+ 
+            '.png} style={{width:"80px"}}/>');
+        $("#enemycp").text(this.state.enemyteam[this.currentenemypoke].cp + " CP"); */
     });
     socket.on('playercount', function (data) { //socket for player count
         $("#playercount").text(data.count);
     });
     socket.on('enemychoseteam', function (data2) { //socket for enemy team
-        //console.log(data2);
-        enemyteam = data2;
+        console.log(data2);
+        enemyteam = data2.enemyteam;
+        enemyname = data2.enemyname;
+        $("#playercountinlobby").text(2);
+        setInitialHP();
+        $("#enemycp").text(data2.enemyteam[currentenemypoke].cp + " CP");
     });
-    //This function will never happen with the new layout
+    /* //This function will never happen with the new layout
     socket.on('enemychangedname', function (data2) {
         enemyname = data2.playername;
-    });
+    }); */
 
     //switch or use a move
 
     setInterval(function () {
-        if (Date.now() - afktimer > 60000 && started) {
+        console.log('interval');
+        if (Date.now() - afktimer > 60000 && started && winner === 0) {
             socket.disconnect();
             display("you have been disconnected for inactivity");
             return;
         }
-        if (move === "" || doingcharge || chargeincoming || winner >= 0)
+        if (move.moveId === "" || doingcharge || chargeincoming || winner >= 0){
+            console.log(move);
+            console.log(doingcharge);
+            console.log(chargeincoming);
+            console.log(winner);
             return;
-        if (move.includes("switch")) {
-            if (team[currentpoke].hp > 0)
+        }
+        if (move.moveId.includes("switch_")) {
+            console.log("switch")
+            if (currentHP[currentpoke] > 0)
                 switchcd = 40;
-            currentpoke = parseInt(move.split("_")[1]);
+            currentpoke = parseInt(move.moveId.split("_")[1]);
             updateMoveButtons();
-            move = currentQuickMove();
+            //move = currentQuickMove();
+            //move = {moveId: ""};
             socket.emit('switch', {id: currentpoke});
             turnswaited = 0;
             if ($("#win").html().includes("choose your next pokemon!"))
                 display("");
         }
-        if (team[currentpoke].hp < 1) {
+        if (currentHP[currentpoke] < 1) {
             //switchcd = 0;
+            console.log("choose your next pokemon!");
             display("choose your next pokemon!");
             return;
         }
-        if (enemyteam[currentenemypoke].hp < 1) {
+        if (currentEnemyHP[currentenemypoke] < 1) {
             display("the opponent is choosing their next pokemon!");
             return;
         }
@@ -198,7 +242,7 @@ $(function () {
 
         var quickmovedelta = convertToEnergy(currentQuickMove());
         var movedelta = -1 * convertToEnergy(move);
-        var nextenergy = team[currentpoke].energy + quickmovedelta;
+        var nextenergy = energy[currentpoke] + quickmovedelta;
         //                var nextenergy2 = team[currentpoke].energy + quickmovedelta*2;
         var undertap = nextenergy >= movedelta && move !== currentQuickMove();
         var nextcharge = move;
@@ -208,34 +252,36 @@ $(function () {
             doingcharge = false;
             //console.log("case1");
             turnswaited++;
+            console.log('fast move');
             if (currentQuickMoveDelay() > turnswaited)
                 return;
             turnswaited = 0;
-
-
         } else if (nextenergy < movedelta) {
             doingcharge = false;
             //console.log("case2");
             move = currentQuickMove();
             turnswaited++;
+            console.log('not enough energy for charge move');
             if (currentQuickMoveDelay() > turnswaited)
                 return;
             turnswaited = 0;
-
-
-        } else if (team[currentpoke].energy >= movedelta) {
+        } else if (energy[currentpoke] >= movedelta && !move.moveId.includes("switch_")) {
             //console.log("case3 " + movedelta + " " + team[currentpoke].energy);
             //no problem
-
+            console.log('doing charge move');
         } else if (undertap) {
             doingcharge = false;
             //console.log("case4 undertap");
             move = currentQuickMove();
             turnswaited++;
+            console.log('undertap');
             if (currentQuickMoveDelay() > turnswaited)
                 return;
             turnswaited = 0;
-        } else {
+        }else if(move.moveId.includes("switch_")){
+            doingcharge = false;
+        } 
+        else {
             console.log("wtf");
         }
 
@@ -243,10 +289,9 @@ $(function () {
         //console.log(team[currentpoke].energy);
         //console.log(move);
 
-
-
-        socket.emit('dmg', {move, health: [enemyteam[0].hp, enemyteam[1].hp, enemyteam[2].hp]});
-        if (doingcharge) {
+        console.log(move);
+        socket.emit('dmg', {move, health: currentEnemyHP}); //take this out, switch to onclick
+        if (doingcharge && oshields > 0) {
             display("waiting for opponent to shield");
         }
 
@@ -254,59 +299,62 @@ $(function () {
         if (!doingcharge)
             lock = true;
         setTimeout(function () {
-            lock = false;
-            //                    if (!doingcharge)
-            //                        ;
-            animate(2);
-            //console.log(team[currentpoke].atkboosts);
-            enemyteam[currentenemypoke].hp -= (opponentshielding ? 1 : convertToDamage(move, true));
-            if ($("#win").html().includes("opponent shielded") || $("#win").html().includes("waiting for opponent to shield"))
-                display("");
-            team[currentpoke].energy += convertToEnergy(move);
-            team[currentpoke].energy = team[currentpoke].energy > 100 ? 100 : team[currentpoke].energy;
-
-            var movedata = gm.getMoveById(move);
-
-            if (movedata.buffApplyChance && movedata.buffApplyChance === 1) {
-                //console.log(movedata);
-                if (movedata.buffTarget === "self") {
-                    team[currentpoke].atkboosts += movedata.buffs[0];
-                    team[currentpoke].defboosts += movedata.buffs[1];
-                } else {
-                    enemyteam[currentenemypoke].atkboosts += movedata.buffs[0];
-                    enemyteam[currentenemypoke].defboosts += movedata.buffs[1];
+            if(move.moveId !== "" && !move.moveId.includes("switch_")){
+                lock = false;
+                //                    if (!doingcharge)
+                //                        ;
+                animate(2);
+                //console.log(team[currentpoke].atkboosts);
+                currentEnemyHP[currentenemypoke] -= (opponentshielding ? 1 : convertToDamage(move, true));
+                if ($("#win").html().includes("opponent shielded") || $("#win").html().includes("waiting for opponent to shield"))
+                    display("");
+                energy[currentpoke] += convertToEnergy(move);
+                energy[currentpoke] = energy[currentpoke] > 100 ? 100 : energy[currentpoke];
+    
+                //var movedata = gm.getMoveById(move);
+    
+                if (move.buffApplyChance && move.buffApplyChance === 1) {
+                    //console.log(movedata);
+                    if (move.buffTarget === "self") {
+                        boosts.atk[currentpoke] += move.buffs[0];
+                        boosts.def[currentpoke] += move.buffs[1];
+                    } else {
+                        oboosts.atk[currentenemypoke] += move.buffs[0];
+                        oboosts.def[currentenemypoke] += move.buffs[1];
+                    }
+                    limitboosts();
                 }
-                limitboosts();
+    
+                updateHP();
+                updateEn();
+                //console.log(move);
+    
+                opponentshielding = false;
+                //console.log(undertap);
+                move = undertap ? nextcharge : currentQuickMove();
+                if (doingcharge)
+                    move = {moveId: ""};
+                doingcharge = false;
+    
+                if (currentEnemyHP[currentenemypoke] <= 0)
+                    socket.emit("expecting0health", {expectedteam: enemyteam, expectedenergy: oenergy});
+            
+                move = {moveId: ""}
             }
-
-            updateHP();
-            updateEn();
-            //console.log(move);
-
-            opponentshielding = false;
-            //console.log(undertap);
-            move = undertap ? nextcharge : currentQuickMove();
-            if (doingcharge)
-                move = currentQuickMove();
-            doingcharge = false;
-
-            if (enemyteam[currentenemypoke].hp <= 0)
-                socket.emit("expecting0health", {expectedteam: enemyteam});
         }, doingcharge ? 3500 : 0);
-
 
     }, 500);
     socket.on('expecting0health', function (data) {
-        if (team[currentpoke].hp > 0) {
-            var e0 = team[0].energy;
+        if (currentHP[currentpoke] > 0) {
+            /* var e0 = team[0].energy;
             var e1 = team[1].energy;
-            var e2 = team[2].energy;
+            var e2 = team[2].energy; */
             team = data.expectedteam;
-            team[0].energy = e0;
+            /* team[0].energy = e0;
             team[1].energy = e1;
-            team[2].energy = e2;
+            team[2].energy = e2; */
+            energy = data.expectedenergy;
         }
-
     });
 
 
@@ -325,24 +373,26 @@ $(function () {
         afktimer = Date.now();
         startrecv = true;
         setTimeout(function () {
+            console.log('3');
             display("3");
-            new Audio('alert.wav').play();
-            var id = $("#pokebattlerid").val();
-            socket.emit('enemychoseteam', team);
-            socket.emit('enemychangedname', {playername});
+            socket.emit('enemychoseteam', {enemyteam: team, enemyname: playername});
+            //socket.emit('enemychangedname', {playername});
         }, 0);
         setTimeout(function () {
+            console.log('2');
             display("2")
         }, 1000);
         setTimeout(function () {
+            console.log('1');
             display("1");
             //failsafe
             updateMoveButtons();
             updateSwitchButtons();
         }, 2000);
         setTimeout(function () {
+            console.log('starting...');
             display("");
-            move = currentQuickMove();
+            //move = currentQuickMove();
             started = true;
         }, 3000);
     });
@@ -352,7 +402,9 @@ $(function () {
 
 
 
-    $("html").on("click", "*", function () { //set time for something
+    $("body").on("click", ".maincontainer", function () {
+        console.log('clicked');
+        move = currentQuickMove();
         afktimer = Date.now();
     });
 
@@ -371,7 +423,7 @@ $(function () {
 
 
 
-    $('#ready').click(function () {
+    /* $('#ready').click(function () {
         //Instead of checking this, set the team before joining game mode and check league property of team data
         if (teamFitsInGreat)
             joinGameMode(4199);
@@ -395,9 +447,9 @@ $(function () {
             $("#tutorial").fadeOut(0);
         }//this is new
         socket.emit('ready', {id: socket.id});
-    }
+    } */
 
-    $("#team").on("click", "div", function () { //move this to teambuilder
+    /* $("#team").on("click", "div", function () { //move this to teambuilder
         if (startrecv)
             return;
         if ($(this).attr("id") === "newpoke") { //if adding new pokemon in the current teambuilder
@@ -407,20 +459,20 @@ $(function () {
             selectedNewTeam(this);
         }
 
-    });
+    }); */
 
-    function calcBoxCP(poke) {
+    /* function calcBoxCP(poke) {
         //Delete replaces when updated db with pvpoke gamemaster json
         var name = poke.pokemon.replace("_FORM", "").toLowerCase().replace("-", "_").replace("ALOLA", "ALOLAN");
         return calcCP(name, poke.level, poke.individualAttack, poke.individualDefense, poke.individualStamina);
-    }
-    if (localStorage.id && localStorage.id !== "") {
+    } */
+    /* if (localStorage.id && localStorage.id !== "") {
         $("#pokebattlerid").val(localStorage.id);
         setTimeout(function () {
             $("#loadteam").click();
         }, 0);
-    }
-    $("#loadteam").click(function () {  //Load team using a pokebattler id
+    } */
+    /* $("#loadteam").click(function () {  //Load team using a pokebattler id
         if (started) //This should never happen once the battle screen is on its own page
             return;
         var id = Number.parseInt($("#pokebattlerid").val());
@@ -462,10 +514,10 @@ $(function () {
         });
         updateMoveButtons();
         updateSwitchButtons();
-    });
+    }); */
 
 
-    updateTeamSelector({"pokemon": pokebox});
+    /* updateTeamSelector({"pokemon": pokebox});
     function updateTeamSelector(data) {  //team selector with data from pokebox
         //console.log(data.pokemon);
         $("#team").html("");
@@ -498,7 +550,7 @@ $(function () {
 
                 var cp = calcCP(name2, cur.level, cur.individualAttack, cur.individualDefense, cur.individualStamina);
                 //console.log("using calcp with : " + name2 + " " + cur.level + " " + cur.individualAttack + " " + cur.individualDefense + " " + cur.individualStamina + " " + cp);
-                toappend += "<div " + selected + " data-name='" + name + "' data-id='" + i + "' style='background-image: url(" + showdownURL(data.pokemon[i].pokemon) + ")'>" + cp + " " + movedisplay + "</div>";
+                toappend += "<div " + selected + " data-name='" + name + "' data-id='" + i + "' style='background-image: url(" + spriteURL(data.pokemon[i].pokemon) + ")'>" + cp + " " + movedisplay + "</div>";
                 //console.log(toappend);
                 //
 
@@ -509,8 +561,9 @@ $(function () {
         toappend += "<div id='newpoke'><span style='opacity:0'>a</span><span style='position:absolute;top:20px;left:35px;font-size:50px;'>+</span></div>"
         $("#team").append(toappend);
         selectedNewTeam();
-    }
-    function selectedNewTeam(this2) {
+    } */
+
+    /* function selectedNewTeam(this2) {
         teamFitsInGreat = true;
         //console.log($(this));
         var len = $(".selectedpoke").length;
@@ -550,20 +603,24 @@ $(function () {
             updateMoveButtons();
             localStorage.selected = JSON.stringify(storage);
         }
-    }
+    } */
 
 
 
 
     $('body').on("click", "#chargemove1container", function (e) {//code for using charge move 1
+        console.log('charge move clicked');
         if (!started || lock)
             return;
-        move = team[currentpoke].cinematicMove;
+        console.log('not escaping');
+        move = team[currentpoke].chargedMove1;
     });
     $('body').on("click", "#chargemove2container", function (e) {//code for using charge move 2
+        console.log('charge move clicked');
         if (!started || lock)
             return;
-        move = team[currentpoke].cinematicMove2;
+        console.log('not escaping');
+        move = team[currentpoke].chargedMove2;
     });
     $('body').on("click", ".shieldbtn", function (e) {//clicked shield button
         useShield();
@@ -583,11 +640,14 @@ $(function () {
         var at = $(this).attr("name");
         //console.log(currentpoke);
         //console.log(at);
-        if (!doingcharge && currentpoke != at) //confirm switch is possible
-            move = "switch_" + at;
+        if (!doingcharge && currentpoke !== at){//confirm switch is possible
+            move = {moveId: `switch_${at}`};
+        }else{
+            move = {moveId: ""};
+        }
     });
-    var changedlobby = false;
-    $("#changelobbybtn").click(function () { //changing lobbies?
+    //var changedlobby = false;
+    /* $("#changelobbybtn").click(function () { //changing lobbies?
         var n = Number.parseInt($("#lobbyinput").val());
         if (!isNaN(n) && n > 0 && n < 1000) {//check lobby id for being a number and in acceptable range of values
             if (started)
@@ -602,7 +662,7 @@ $(function () {
         }
 
 
-    });
+    }); */
 
 
     setInterval(function () {
@@ -612,16 +672,17 @@ $(function () {
         shieldcount1.text(oshields);
         name2.html(playername);
         name1.html(enemyname);
+        window.localStorage.setItem(`afktimer${playername}`, Date.now());
         //question.PNG
         if (started) { //set enemy pokemon image
-            img1.css("background-image", "url(" + showdownURL(enemyteam[currentenemypoke].name) + ")");
+            img1.css("background-image", "url(" + spriteURL(enemyteam[currentenemypoke].speciesId) + ")");
         } else {
             img1.css("background-image", "url(question.PNG)");//should only be a catch with a proper teambuilder
         }
-        img2.css("background-image", "url(" + showdownURL(team[currentpoke].name) + ")");//set image of your pokemon
+        img2.css("background-image", "url(" + spriteURL(team[currentpoke].speciesId) + ")");//set image of your pokemon
 
         for (var i = 0; i < 3; i++) { //this bit of logic should probably go somewhere else
-            if (enemyteam[i].hp < 1)
+            if (currentEnemyHP[i] < 1)
                 $(".enemypoke").eq(i).addClass("KOpoke");
         }
         var r = $("#ready");
@@ -638,6 +699,7 @@ $(function () {
                 socket.emit('end', {});
                 var share = "<br>If you like the simulator, share it around to increase the playerbase";
                 display(winner === 1 ? "you win. " + refreshbtn + share : "you lose. " + refreshbtn + share);
+                winner === 1 ? window.localStorage.setItem("winner", playername) : window.localStorage.setItem("winner", enemyname);
             }
 
             //socket.disconnect();
@@ -655,25 +717,34 @@ $(function () {
     }
 
     function disableSwitchButton(poke) {
-
         for (var i = 0; i < 3; i++) {
-            $("button[name='" + i + "']").attr("disabled", team[i].hp < 1);
+            $("button[name='" + i + "']").attr("disabled", currentHP[i] < 1);
         }
         $("button[name='" + poke + "']").attr("disabled", true);
-//this is new
+
         var disableall = false;
         if (!(switchcd === 0 && started))
             disableall = true;
-        if (team[currentpoke].hp < 1 && started)
+        if (currentHP[currentpoke] < 1 && started)
             disableall = false;
         if (disableall)
             $("#switch button").attr("disabled", true);
-    }//this is new
+    }
+
     function updateSwitchButtons() {
+        if(team.length < 3){
+            $("#switch3").css("display", "none");
+        }
+        if(team.length < 2){
+            $("#switch2").css("display", "none");
+        }
         for (var i = 0; i < 3; i++) {
-            $("#switch" + (i + 1)).css("background-image", "url(" + showdownURL(team[i].name) + ")");
+            if(team[i]){
+                $("#switch" + (i + 1)).css("background-image", "url(" + spriteURL(team[i].speciesId) + ")");
+            }
         }
     }
+
     setInterval(function () {
         switchcd--;
         if (switchcd < 0)
@@ -681,36 +752,62 @@ $(function () {
         //replace this with code that hides the switch timer and replaces it with the switch button img
     }, 1000);
 
+    setInitialHP = () => {
+        console.log(team);
+        console.log(enemyteam);
+        currentHP = team.map((mon) => {
+            return mon.stats.maxhp;
+        });
+        currentEnemyHP = enemyteam.map((mon) => {
+            return mon.stats.maxhp;
+        });
+        console.log(`Initial HP values: ${currentHP}, ${currentEnemyHP}`);
+    }
+
     function updateHP() {
         //                if (winner >= 0) {
         //                    display(winner === 1 ? "you win" : "you lose");
         //                    return;
         //                }
-        if (team[0].hp < 1 && team[1].hp < 1 && team[2].hp < 1)
+        /* if (currentHP[0] < 1 && currentHP[1] < 1 && currentHP[2] < 1)
             winner = 0;
-        if (enemyteam[0].hp < 1 && enemyteam[1].hp < 1 && enemyteam[2].hp < 1)
-            winner = 1;
-
-
-        var w1 = Math.floor((team[currentpoke].hp / team[currentpoke].maxhp) * 200);
-        var w2 = Math.floor((enemyteam[currentenemypoke].hp / enemyteam[currentenemypoke].maxhp) * 200);
-        $("#hp2").css({width: (w1)}); //div shortens based on amount of health
-        $("#hp1").css({width: (w2)});
-        $("#hp1").css({"background-color": (w2 < 100 ? (w2 < 20 ? ("red") : "yellow") : "#66ff66")});
-        $("#hp2").css({"background-color": (w1 < 100 ? (w1 < 20 ? ("red") : "yellow") : "#66ff66")});
-        //sets color based on width of div
+        if (currentEnemyHP[0] < 1 && currentEnemyHP[1] < 1 && currentEnemyHP[2] < 1)
+            winner = 1; */
+        
+        var KOcount = 0;
+        currentHP.forEach(x => {
+            if(x < 1) KOcount++;
+            if(KOcount === team.length) winner = 0;
+        });
+        KOcount = 0;
+        currentEnemyHP.forEach(x => {
+            if(x < 1) KOcount++;
+            if(KOcount === team.length) winner = 1;
+        });
+        
+        var w1 = Math.floor((currentHP[currentpoke] / team[currentpoke].stats.maxhp) * 200);
+        //console.log(currentEnemyHP[currentenemypoke]);
+        //console.log(enemyteam[currentenemypoke].stats.maxhp);
+        if(currentEnemyHP[currentenemypoke]){
+            var w2 = Math.floor((currentEnemyHP[currentenemypoke] / enemyteam[currentenemypoke].stats.maxhp) * 200);
+            $("#hp2").css({width: (w1)}); //div shortens based on amount of health
+            $("#hp1").css({width: (w2)});
+            $("#hp1").css({"background-color": (w2 < 100 ? (w2 < 20 ? ("red") : "yellow") : "#66ff66")});
+            $("#hp2").css({"background-color": (w1 < 100 ? (w1 < 20 ? ("red") : "yellow") : "#66ff66")});
+            //sets color based on width of div
+        }
     }
     function updateEn() {
         //$("#enin").css({width: (team[currentpoke].energy)});
         //console.log(team[currentpoke].energy);
-        $("#move1progress").css({height: (80 * team[currentpoke].energy / team[currentpoke].req1)});
-        $("#move2progress").css({height: (80 * team[currentpoke].energy / team[currentpoke].req2)});
-        if (team[currentpoke].energy >= team[currentpoke].req1) {
+        $("#move1progress").css({height: (80 * energy[currentpoke] / team[currentpoke].chargedMove1.energy)});
+        $("#move2progress").css({height: (80 * energy[currentpoke] / team[currentpoke].chargedMove2.energy)});
+        if (energy[currentpoke] >= team[currentpoke].chargedMove1.energy) {
             $("#chargemove1btn").addClass("active")
         } else {
             $("#chargemove1btn").removeClass("active")
         }
-        if (team[currentpoke].energy >= team[currentpoke].req2) {
+        if (energy[currentpoke] >= team[currentpoke].chargedMove2.energy) {
             $("#chargemove2btn").addClass("active")
         } else {
             $("#chargemove2btn").removeClass("active")
@@ -720,43 +817,46 @@ $(function () {
     function updateMoveButtons() {
         //console.log(enemyteam);
         // console.log(startrecv);
-        var q = currentQuickMove();
-        var q2 = "unknown";
+        var q = team[currentpoke].fastMove.name;
+        //var q2 = "unknown";
         if (enemyteam)
             if (startrecv)
-                q2 = enemyteam[currentenemypoke].quickMove.replace("_FAST", "");
-
-        var c1 = team[currentpoke].cinematicMove;
-        var c2 = team[currentpoke].cinematicMove2;
-        $("#quickmovebtn").text(q.toLowerCase().replace("_", " ").replace("_", " "));
-        $("#enemyquickmovebtn").text(q2.toLowerCase().replace("_", " ").replace("_", " "));
-        $("#chargemove1btn").data("name", c1);
-        $("#chargemove1text").text(c1.toLowerCase().replace("_", " ").replace("_", " "));
-        $("#chargemove2btn").data("name", c2);
-        $("#chargemove2text").text(c2.toLowerCase().replace("_", " ").replace("_", " "));
-
+                q2 = enemyteam[currentenemypoke].fastMove.name;
+        $("#quickmovebtn").text(q);
+        //$("#enemyquickmovebtn").text(q2.toLowerCase().replace("_", " ").replace("_", " "));
         //console.log(team[currentpoke].ctype1);
-        for (var i = 1; i < 3; i++) {
-            $("#chargemove" + i + "btn").attr("class", "movebtn noselect " + team[currentpoke]["ctype" + i + ""]);
-            $("#move" + i + "background").attr("class", team[currentpoke]["ctype" + i + ""]);
+        /* for (var i = 1; i < 3; i++) {
+            $("#chargemove" + i + "btn").attr("class", "movebtn noselect " + team[currentpoke].chargedMove1.type);
+            $("#move" + i + "background").attr("class", team[currentpoke].chargedMove2.type);
+        } */
+        var c1 = team[currentpoke].chargedMove1.name;
+        $("#chargemove1btn").data("name", c1);
+        $("#chargemove1text").text(c1);
+        $("#chargemove1btn").attr("class", "movebtn noselect " + team[currentpoke].chargedMove1.type);
+        $("#move1background").attr("class", team[currentpoke].chargedMove1.type);
+        
+        if(team[currentpoke].chargedMove2 && team[currentpoke].chargedMove2.name){
+            var c2 = team[currentpoke].chargedMove2.name;
+            $("#chargemove2btn").data("name", c2);
+            $("#chargemove2text").text(c2);
+            $("#chargemove2btn").attr("class", "movebtn noselect " + team[currentpoke].chargedMove2.type);
+            $("#move2background").attr("class", team[currentpoke].chargedMove2.type);
         }
-
-
-
         updateEn();
     }
     function currentQuickMove() { //this can be deleted once using pvpoke's gamemaster data
-        return team[currentpoke].quickMove.replace("_FAST", "");
+        return team[currentpoke].fastMove;
     }
     function currentQuickMoveDelay() {
-        return team[currentpoke].quickMoveDelay;
+        return team[currentpoke].fastMove.cooldown / 500;
     }
 
 
-    function showdownURL(url) {
-        var t = url.replace("_FORM", "").toLowerCase().replace("_", "-").replace("_", "-").replace("alolan", "alola");
-        return "./sprites/" + t + "/" + t + ".png";
+    function spriteURL(url) {
+        var t = url.replace("_", "-").replace("alolan", "alola");
+        return `./sprites/${t}.png`;
     }
+
     function animate(n) {
         if (n === 1)
             $("#img1").animate({top: "-40px", left: "10px"}, 240, "linear", function () {
@@ -769,12 +869,12 @@ $(function () {
     }
 
 
-    $("#namebtn").click(function () {
+    /* $("#namebtn").click(function () {
 
         playername = $("#nameinput").val();
         localStorage.name = playername;
-    });
-    function getNewPoke() { //this translates the inputs of modalwindow into raw data
+    }); */
+    /* function getNewPoke() { //this translates the inputs of modalwindow into raw data
         var cinematicMove = $(".modal .move-select.charged").eq(0).val();
         var cinematicMove2 = $(".modal .move-select.charged").eq(1).val();
         var quickMove = $(".modal .move-select.fast").eq(0).val();
@@ -785,8 +885,8 @@ $(function () {
         var pokemon = $(".modal .poke-select").val();
         console.log(pokemon);
         return {cinematicMove, cinematicMove2, quickMove, individualAttack, individualDefense, individualStamina, level, pokemon};
-    }
-    $("html").on("click", "#addpokebtn", (function () {
+    } */
+    /* $("html").on("click", "#addpokebtn", (function () {
 
 
 
@@ -794,8 +894,8 @@ $(function () {
         localStorage.pokebox = JSON.stringify(pokebox);
         updateTeamSelector({pokemon: pokebox});
         closeModalWindow();
-    }));
-    $("html").on("click", ".master-stats", (function () {
+    })); */
+    /* $("html").on("click", ".master-stats", (function () {
         $(".level").val("40");
         updateNewCP();
     }));
@@ -808,8 +908,8 @@ $(function () {
         var s = $(".modal .poke-select").val();
         $(".level").val(maxTradeLevel(s)[0]);
         updateNewCP();
-    }));
-    $("html").on("keyup", ".poke-search", function (e) {
+    })); */
+    /* $("html").on("keyup", ".poke-search", function (e) {
         var searchStr = $(this).val().toLowerCase();
         //console.log(searchStr);
         if (searchStr == '')
@@ -828,22 +928,22 @@ $(function () {
         pokeSelectChanged(pokename);
         updateNewCP();
         $(".great-stats").click(); //this is new
-    });
-    $("html").on("change", ".poke-select", function (e) {
+    }); */
+    /* $("html").on("change", ".poke-select", function (e) {
         var selectedpoke = $(this).val();
         $(".poke-search").val(selectedpoke);
         pokeSelectChanged(selectedpoke);
-    });
-    $("html").on("change", ".modal *", function (e) {
+    }); */
+    /* $("html").on("change", ".modal *", function (e) {
         //console.log("change");
         updateNewCP();
-    });
-    function updateNewCP() {
+    }); */
+    /* function updateNewCP() {
         var p = getNewPoke();
         var cp = calcCP(p.pokemon, p.level, p.individualAttack, p.individualDefense, p.individualStamina);
         $(".cp .stat").html(cp);
-    }
-    function pokeSelectChanged(poke) {
+    } */
+    /* function pokeSelectChanged(poke) {
         //console.log(poke);
         var pokegm = gm.getPokemonById(poke);
 
@@ -866,14 +966,14 @@ $(function () {
         }
         $(".move-select.charged").html(chargemoves);
 
-    }
+    } */
 
     socket.on("playersinmodes", function (data) {
         $("#playersgreat").html(data.great);
         $("#playersmaster").html(data.master);
     });
 
-    $("#search").on("keydown", function () { //this whole thing is new
+    /* $("#search").on("keydown", function () { //this whole thing is new
         setTimeout(function () {
             var s = $("#search").val();
             console.log(s);
@@ -887,7 +987,5 @@ $(function () {
             });
         }, 0);
 
-    })
-
-    display("Make a team, then select a league to start playing."); //this is new
+    }) */
 });

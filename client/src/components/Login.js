@@ -33,7 +33,13 @@ class Login extends Component {
             this.setState({errText: "Please enter a username and password."});
             return;
         }
-        axios.get(`/api/users/name/${username}`)
+        /* axios.post('/api/online/on', {
+                        _id: res.data._id,
+                        username: res.data.username,
+                        favorite: res.data.favorite
+                    }).then(res => console.log(res.data)).catch(err => console.log(err)); */
+                    
+        /* axios.get(`/api/users/name/${username}`)
         .then(res => {
             if(res.status === 400){
                 console.log(res);
@@ -47,11 +53,6 @@ class Login extends Component {
                 } else {
                     console.log("Match found.");
                     this.setState({errText: ""});
-                    /* axios.post('/api/online/on', {
-                        _id: res.data._id,
-                        username: res.data.username,
-                        favorite: res.data.favorite
-                    }).then(res => console.log(res.data)).catch(err => console.log(err)); */
                     this.props.setCurrentUser(res.data);
                     this.setRedirect();
                 }
@@ -60,7 +61,23 @@ class Login extends Component {
         .catch(err => {
             console.log(err);
             this.setState({errText: "User not found. Please enter a valid username."});
-        });
+        }); */
+
+        axios.post('/api/users/login', {username, password}).then(res => {
+            console.log(res);
+            if(res.status === 400){
+                this.setState({errText: "Error connecting to server. Please try again later."})
+            } else {
+                if(res.data.message){
+                    this.setState({errText: res.data.message, password: ''});
+                } else {
+                    console.log("Match found.");
+                    this.setState({errText: ""});
+                    this.props.setCurrentUser(res.data);
+                    this.setRedirect();
+                }
+            }
+        }).catch(err => console.log(err));
     }
 
     setRedirect = () => {

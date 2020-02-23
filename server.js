@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const _ = require('underscore');
 const db = "mongodb+srv://pvpsimapp:pvpsimapp123@cluster0-oxflz.mongodb.net/pvpsimulator?retryWrites=true&w=majority";
 const pokemon = require('./routes/api/pokemon');
 const users = require('./routes/api/users');
@@ -24,11 +25,12 @@ var socketsInWaiting = [];
 
 app.post('/api/socket/store', (req, res) => {
     socketsInWaiting.push(req.body);
-    console.log(req.body);
-    console.log(`Sockets: ${socketsInWaiting}`);
+    console.log(`Sockets in waiting:`);
+    console.log(socketsInWaiting);
     res.sendStatus(200);
 }); //after this, replace the socket with this id with a new socket created by battle.html
 //or, store the id of the socket in waiting in localStorage and use addToLobby or similar to replace with the new socket
+
 
 
 const port = process.env.PORT || 4000;
@@ -43,6 +45,7 @@ for (var i = 0; i < 9999; i++) {
     lobbies.push({});
 }
 
+//add code here to remove socket from socketinwaiting after USER IS PLACED IN LOBBY
 function addPlayerToLobby(player, id, privacyPacket) {
     console.log("Adding player to lobby. Private: " + privacyPacket.status);
     for (var i = id; i < 9999; i++) {
@@ -51,7 +54,7 @@ function addPlayerToLobby(player, id, privacyPacket) {
             lobbies[i].player1.lobbyid = i;
             lobbies[i].player1.lobbypos = 1;
             if(privacyPacket.status){
-                lobbies[i].private = true;
+                lobbies[i].private = privacyPacket.status;
                 lobbies[i].awaiting1 = privacyPacket.awaiting1;
                 lobbies[i].awaiting2 = privacyPacket.awaiting2;
             }
@@ -63,6 +66,9 @@ function addPlayerToLobby(player, id, privacyPacket) {
             }
             return i;
         }
+        console.log(lobbies[i].player1.id);
+        console.log(lobbies[i].player2);
+        console.log(lobbies[i].private);
         if (!lobbies[i].player2 && !lobbies[i].private) {
             console.log("Adding second player. Private lobby: " + lobbies[i].private);
             lobbies[i].player2 = player; //add second player to lobby
@@ -74,10 +80,47 @@ function addPlayerToLobby(player, id, privacyPacket) {
             } else {
                 lobbies[i].player2.emit("lobbycount", {count: 1});
             }
-            return i;
+            return i; 
         }else if(!lobbies[i].player2 && lobbies[i].private && privacyPacket.status){
-            console.log("User Id on socket: " + player.userId);
-            if(player.userId === lobbies[i].awaiting1 || player.userId === lobbies[i].awaiting2){
+            //there is no player2, the lobby is private, and the player's packet shows private
+            var player2Match = {};
+            for(var x=0; x<socketsInWaiting.length; x++){
+                console.log(socketsInWaiting[x]);
+                if(socketsInWaiting[x].socket === player.id){
+                    player2Match = socketsInWaiting[x]; //match socket in waiting to player
+                    console.log("Player 2 match found:");
+                    console.log(player2Match);
+                }
+            }
+            if(player2Match !== {} && player2Match.opponent){
+                var player1Match = {};
+                for(var x=0; x<socketsInWaiting.length; x++){
+                    if(socketsInWaiting[x].socket === lobbies[i].player1.id){
+                        player1Match = socketsInWaiting[x]; //match socket in waiting to player1 in lobby
+                        console.log("Player 1 match found:");
+                        console.log(player1Match);
+                    }
+                } 
+                if(player1Match !== {} && player1Match.opponent){ //everything is valid
+                    //the opponent id matches the user id for both sockets in waiting
+                    if(player1Match.opponent === player2Match.user && player1Match.user === player2Match.opponent){
+                        //user pair found: good to enter private lobby
+                        console.log("User Ids for accepted opponents: "+player1Match.user+"\n"+player2Match.user);
+                        console.log("Adding second player. Private lobby: " + lobbies[i].private);
+                        lobbies[i].player2 = player; //add second player to lobby
+                        lobbies[i].player2.lobbyid = i;
+                        lobbies[i].player2.lobbypos = 2;
+                        if (lobbies[i].player1) {
+                            lobbies[i].player1.emit("lobbycount", {count: 2});
+                            lobbies[i].player2.emit("lobbycount", {count: 2});
+                        } else {
+                            lobbies[i].player2.emit("lobbycount", {count: 1});
+                        }
+                        return i;
+                    }
+                } 
+            }
+            /* if(player.userId === lobbies[i].awaiting1 || player.userId === lobbies[i].awaiting2){
                 console.log("Adding second player. Private lobby: " + lobbies[i].private);
                 lobbies[i].player2 = player; //add second player to lobby
                 lobbies[i].player2.lobbyid = i;
@@ -89,7 +132,7 @@ function addPlayerToLobby(player, id, privacyPacket) {
                     lobbies[i].player2.emit("lobbycount", {count: 1});
                 }
                 return i;
-            }
+            } */
         }
     }
     //shouldn't happen
@@ -100,6 +143,9 @@ function removePlayerFromLobby(player) {
     var pos = player.lobbypos;
     var pos2 = other(pos);
     lobbies[i]["player" + pos] = undefined;
+    if(!lobbies[i].player1 && !lobbies[i].player2 && lobbies[i].private){
+        lobbies[i].private = undefined;
+    }
     if (lobbies[i]["player" + pos2])
         lobbies[i]["player" + pos2].emit("lobbycount", {count: 1});
 }
@@ -155,9 +201,12 @@ function sendLobbyCount() {
 io.sockets.on('connection', socket => {
     console.log(socket.id);
 
-    socket.on('attachuser', function(data){ //might have to send socket with new field back to the user
+    /* socket.on('attachuser', function(data){ //might have to send socket with new field back to the user
+        console.log(`Socket ID: ${data._id}`)
         socket.userId = data._id;
-    });
+        //console.log(socket);
+        socket.emit('attached', {});
+    }); */
 
     //receive socket that player 2 has accepted request, send socket to player 1
     socket.on('challengeaccepted', function(data) {
@@ -169,12 +218,38 @@ io.sockets.on('connection', socket => {
         }
     });
 
+    /* socket.on("migrateuser", function(data) {
+        var socketList = io.sockets.connected;
+        console.log(socketList);
+        for(s in socketList){
+            console.log("migrate");
+            console.log(s.userId);
+        }
+    }); */
+
     //var chatlog = "";
+
     socket.on('battleconnection', function(data) { //this emit is sent from the battle page with localStorage data and new socket!!!!
+        //connect new socket to user and opponent on old socket
+        let socketToAdd;
+        for(var i=0; i<socketsInWaiting.length; i++){
+            if(socketsInWaiting[i].user === data.user){
+                /* socketsInWaiting[i] = {
+                    socket: socket.id,
+                    user: data.user,
+                    opponent: data.privacyPacket.awaiting1 === data.user ?  data.privacyPacket.awaiting2 :  data.privacyPacket.awaiting1
+                } */
+                socketToAdd = {socket: socket.id, user: data.user};
+                socketsInWaiting[i] = socketToAdd;
+                console.log("Match to user found: ");
+                console.log(socketsInWaiting[i]);
+            }
+        }
+        
         socket.emit('connected', {});
         players++;
         console.log("We have a new client: " + socket.id + "\nPlayers: " + players);
-        console.log(socket.userId);
+        //console.log(socket.userId);
         socket.ready = false;
         var lobbypos = addPlayerToLobby(socket, 0, data.privacyPacket);
         socket.emit("lobbypos", {lobbypos});
@@ -183,13 +258,22 @@ io.sockets.on('connection', socket => {
         //socket.emit('chat', {chatlog});
 
 
-        //For invites, need to open socket upon accepting invite
-        //(Or after choosing and confirming team) and then pass in the lobby number that was received in the invite
-        socket.on('lobbyrequest',//pass in private boolean as data?
+        socket.on('lobbyrequest',
                 function (data) {
                     console.log(`Lobby request received: ${socket.lobbypos}`);
                     removePlayerFromLobby(socket);
                     console.log(`Player removed from lobby: ${socket.lobbypos}`);
+                    if(data.privacyPacket.status){
+                        for(var i=0; i<socketsInWaiting.length; i++){
+                            console.log(socket.id);
+                            console.log(socketsInWaiting[i].socket);
+                            if(socketsInWaiting[i].socket === socket.id){
+                                console.log("Match found");
+                                socketsInWaiting[i].opponent = data.privacyPacket.awaiting1 === socketsInWaiting[i].user ?  data.privacyPacket.awaiting2 :  data.privacyPacket.awaiting1;
+                                console.log(socketsInWaiting[i]);
+                            }
+                        }
+                    } 
                     var newpos = addPlayerToLobby(socket, data.num, data.privacyPacket);
                     socket.emit("lobbypos", {lobbypos: newpos});
                     sendLobbyCount();
@@ -221,9 +305,16 @@ io.sockets.on('connection', socket => {
         });
 
         socket.on('switch', function (data) {
-            console.log(data.poke);
+            console.log(data.id);
             sendToOther(socket, 'switch', data);
         });
+
+        //failsafe for when a desync happens
+        socket.on('expecting0health', function (data) {
+                //console.log("Received: " + data.move);
+                sendToOther(socket, 'expecting0health', data);
+            }
+        );
 
         socket.on('disconnect', function (data) {
             players--;
@@ -231,6 +322,12 @@ io.sockets.on('connection', socket => {
             io.sockets.emit('playercount', {count: players});
             removePlayerFromLobby(socket);
             sendLobbyCount();
-        });
+        }); 
+    });
+
+    //remove initial sockets from socketsinwaiting
+    socket.on('disconnect', function(data){
+        socketsInWaiting = _.reject(socketsInWaiting, s => {return s.socket === socket.id});
+        console.log(socketsInWaiting);
     });
 });

@@ -20,50 +20,7 @@
         <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
     </head>
     <body class="noselect">
-        <div class="addpoke hide">
-            <div class="poke single">             
-                <div class="poke-stats" style="display: block;">
-                    <h3 class="cp">CP <span class="stat">1479</span></h3>
-
-
-                    <div class="advanced-section">
-
-                        <div class="fields">
-
-                            <div class="ivs">
-                                <h3>Level &amp; IV's</h3>
-                                <input class="level" type="number" placeholder="Level" min="1" value='40' max="40" step=".5">
-                                <div class="ivs-group">
-                                    <input class="iv" iv="atk" type="number" placeholder="Atk" value='15' min="0" max="15" step="1"><span>/</span>
-                                    <input class="iv" iv="def" type="number" placeholder="Def" value='15' min="0" max="15" step="1"><span>/</span>
-                                    <input class="iv" iv="hp" type="number" placeholder="HP" value='15' min="0" max="15" step="1">
-                                </div>
-                            </div>
-                            <div class="maximize-section">
-                                <button class="great-stats">Great</button>
-                                <button class="ultra-stats">Ultra</button>
-                                <button class="master-stats">Master</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="move-select-container">
-                        <h3 class="section-title">Fast Move</h3>
-
-                        <select class="move-select fast"><option value="BUBBLE">none</option></select>
-
-                        <h3 class="section-title">Charged Moves</h3>
-
-                        <select id='cmove1select' class="move-select charged"><option value="BUBBLE_BEAM">none</option></select>
-                        <select id='cmove2select' class="move-select charged"><option value="BUBBLE_BEAM">none</option></select>
-                    </div>
-                </div>
-                <div class="center">
-                    <div id='addpokebtn' class="button">Add to pokebox</div>
-                </div>
-            </div>
-        </div>
-        <div class="bgcontainer" style="height:480px; padding-top: 25px; position: relative;">
+        <div class="bgcontainer maincontainer" style="height:480px; padding-top: 25px; position: relative;">
             <div id='enemyteam' class="battlestuff">
                 <div class='enemypoke'></div>
                 <div class='enemypoke'></div>
@@ -75,24 +32,17 @@
             <div class="pokeimage battlestuff" id='img1' style='background-image: url("question.PNG")'></div>
             <img class="battlestuff" src="shield.png" id="shield1" alt="shield">
             <span id="shieldcount1" class="battlestuff">2</span>
-
-            <a id="ready" class="button button-green noselect">
-                <img src="great.png" style="position: absolute;left:0px;">
-                <strong>Find an opponent (Great league)<br>Players: <span id="playersgreat">0</span></strong>
-            </a>
-
-
             <img src="shield.png" id="shield2" class="battlestuff" alt="shield">
             <span id="shieldcount2" class="battlestuff">2</span>
             <div class="hpcontainer battlestuff" style="width:203px" id="hp2container"><div class="hp" style="width:200px" id="hp2"></div></div>
             <div class="pokeimage battlestuff" id='img2' style='background-image: url("question.PNG")'></div>
-            <div id="win" style='text-transform: none'></div>
-            <div id="win2" style='text-transform: none'></div>
             <div id='name2' class="battlestuff"></div>
         </div>
+        <div id="win" style='text-transform: none'></div>
+        <div id="win2" style='text-transform: none'></div>
         <div id="buttons"  class="bgcontainer battlecontainer">
             <div id="quickmovecontainer"><b>quick move:</b> <span id="quickmovebtn">mud shot</span></div>
-            <div id="enemyquickmovecontainer"><b>enemy quick move:</b> <span id="enemyquickmovebtn">unknown</span></div>
+            <!-- <div id="enemyquickmovecontainer"><b>enemy quick move:</b> <span id="enemyquickmovebtn">unknown</span></div> -->
             <div id="chargemove1container">
                 <div id="chargemove1btn" class="movebtn noselect rock active"></div>
                 <div id="move1progress" style="height: 60px">                
@@ -139,29 +89,40 @@
 
 
         <script>
-            
             var battleData = JSON.parse(localStorage.getItem('battleData'));
             console.log(battleData);
             var socket;
-            var gm = GameMaster.getInstance();
+            //var gm = GameMaster.getInstance();
             var currentpoke = 0;
             var currentenemypoke = 0;
             var started = false;
             var sentendpacket = false;
             var switchcd = 0;
-            var team;
+            var team = battleData.team;
             var enemyteam;
             var shields = 2;
             var oshields = 2;
-            var move = "";
+            var energy = [0,0,0];
+            var oenergy = [0,0,0];
+            var currentHP = [];
+            var currentEnemyHP = [];
+            var boosts = {
+                atk: [0,0,0],
+                def: [0,0,0]
+            };
+            var oboosts = {
+                atk: [0,0,0],
+                def: [0,0,0]
+            };
+            var move = {moveId: ""};
             var opponentshielding = false;
             var shielding = false;
             var doingcharge = false;
             var chargeincoming = false;
             var winner = -1;
-            var pokebox = localStorage.pokebox ? JSON.parse(localStorage.pokebox) : defaultbox.pokemon;
+            //var pokebox = localStorage.pokebox ? JSON.parse(localStorage.pokebox) : defaultbox.pokemon;
             //var socket;
-            var playername = localStorage.name || ("anonymous" + Math.floor(Math.random() * 9999));
+            var playername = battleData.currentUser.username;
             var turnswaited = 0;
             var lock = false;
             var startrecv = false;
