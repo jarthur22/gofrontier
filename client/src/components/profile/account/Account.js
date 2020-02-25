@@ -8,6 +8,7 @@ class Account extends Component {
         changingEmail: false,
         changingPassword: false,
         changingFavorite: false,
+        validated: {},
         enteredPassword: "",
         newPassword: "",
         confirmNewPassword: "",
@@ -130,10 +131,33 @@ class Account extends Component {
     }
 
     renderChangeEmail = () => {
-        const {changingEmail, enteredPassword, newEmail, submittedEmail} = this.state;
-        const {currentUser} = this.props;
+        const {changingEmail, validated, enteredPassword, newEmail, submittedEmail} = this.state;
         if(changingEmail){
-            if(enteredPassword === currentUser.password){
+            if(validated.status){
+                if(validated.message){
+                    setTimeout(() => {
+                        this.setState({
+                            enteredPassword: "",
+                            validated: {}
+                        });
+                    }, 3000);
+                    return(
+                        <React.Fragment>
+                            <tr>
+                                <td className="row1"></td>
+                                <td>
+                                    <label>Current Password: </label>
+                                    <input type="password" onChange={this.onChange("enteredPassword")} value={enteredPassword}/>
+                                    <button onClick={this.submitCurrentPassword}>Submit Password</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className = "row1"></td>
+                                <td>{validated.message}</td>
+                            </tr>
+                        </React.Fragment>
+                    )
+                }
                 if(submittedEmail === "failure"){
                     setTimeout(() => {
                         this.setState({changingEmail: false, submittedEmail: "", newEmail: "", enteredPassword: ""});
@@ -146,7 +170,13 @@ class Account extends Component {
                     )
                 }else if(submittedEmail === "success"){
                     setTimeout(() => {
-                        this.setState({changingEmail: false, submittedEmail: "", newEmail: "", enteredPassword: ""});
+                        this.setState({
+                            changingEmail: false, 
+                            submittedEmail: "", 
+                            newEmail: "", 
+                            enteredPassword: "",
+                            validated: {}
+                        });
                     }, 3000);
                     return(
                         <tr>
@@ -188,6 +218,7 @@ class Account extends Component {
                             <td>
                                 <label>Current Password: </label>
                                 <input type="password" onChange={this.onChange("enteredPassword")} value={enteredPassword}/>
+                                <button onClick={this.submitCurrentPassword}>Submit Password</button>
                             </td>
                         </tr>
                     </React.Fragment>
@@ -221,11 +252,58 @@ class Account extends Component {
         }
     }
 
+    submitCurrentPassword = () => {
+        const {username} = this.props.currentUser;
+        const {enteredPassword} = this.state;
+        console.log(enteredPassword);
+        axios.post('/api/users/login', {username, password: enteredPassword}).then(res => {
+            console.log(res);
+            if(res.status === 400){
+                console.log(res);
+            } else {
+                if(res.data.message){
+                    this.setState({validated: {
+                        status: "failed",
+                        message: res.data.message
+                    }});
+                } else {
+                    this.setState({validated: {
+                        status: "accepted"
+                    }});
+                }
+            }
+        }).catch(err => console.log(err));
+    }
+
     renderChangePassword = () => {
-        const {currentUser} = this.props;
-        const {changingPassword, enteredPassword, newPassword, confirmNewPassword, submittedPassword} = this.state;
+        const {changingPassword, validated, enteredPassword, newPassword, confirmNewPassword, submittedPassword} = this.state;
         if(changingPassword){
-            if(enteredPassword === currentUser.password){
+            if(validated.status){
+                if(validated.message){
+                    setTimeout(() => {
+                        this.setState({
+                            enteredPassword: "",
+                            validated: {}
+                        });
+                    }, 3000);
+                    return(
+                        <React.Fragment>
+                            <tr>
+                                <td className="row1"></td>
+                                <td>
+                                    <label>Current Password: </label>
+                                    <input type="password" onChange={this.onChange("enteredPassword")} value={enteredPassword}/>
+                                    <button onClick={this.submitCurrentPassword}>Submit Password</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className = "row1"></td>
+                                <td>{validated.message}</td>
+                            </tr>
+                        </React.Fragment>
+                    )
+                }
+
                 if(submittedPassword === "failure"){
                     setTimeout(() => {
                         this.setState({
@@ -247,7 +325,8 @@ class Account extends Component {
                             submittedPassword: "", 
                             newPassword: "", 
                             enteredPassword: "", 
-                            confirmNewPassword: ""
+                            confirmNewPassword: "",
+                            validated: {}
                         });
                     }, 3000);
                     return(
@@ -303,6 +382,7 @@ class Account extends Component {
                             <td>
                                 <label>Current Password: </label>
                                 <input type="password" onChange={this.onChange("enteredPassword")} value={enteredPassword}/>
+                                <button onClick={this.submitCurrentPassword}>Submit Password</button>
                             </td>
                         </tr>
                     </React.Fragment>

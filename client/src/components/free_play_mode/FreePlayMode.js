@@ -4,7 +4,7 @@ import axios from 'axios';
 import Pokebox from './Pokebox';
 import ConfirmTeam from './ConfirmTeam';
 import Opponent from './Opponent';
-import EndGame from '../battle/EndGame';
+import EndGame from './EndGame';
 import '../../App.css';
 import openSocket from 'socket.io-client';
 
@@ -82,6 +82,10 @@ class FreePlayMode extends Component {
         this.setState({
             step: step - 1
         });
+    }
+
+    resetStep = () => {
+        this.setState({step: 1});
     }
 
     pokemonAddedToBox = () => {
@@ -198,6 +202,7 @@ class FreePlayMode extends Component {
                 return(
                     <EndGame className="freeplaycomponent"
                         id={currentUser.username}
+                        resetStep={this.resetStep}
                     />
                 )
             default:

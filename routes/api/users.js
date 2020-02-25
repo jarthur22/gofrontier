@@ -68,8 +68,6 @@ app.get('/:id', (req, res) => {
 app.post('/add', (req, res) => {
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = crypto.pbkdf2Sync(req.body.password, salt, 1000, 64, `sha512`).toString(`hex`);
-    console.log(salt);
-    console.log(hash);
     const newUser = new User({
         username: req.body.username,
         usernameNCS: req.body.username.toLowerCase(),
@@ -126,6 +124,20 @@ app.post('/login', (req, res) => {
         }
     })
     .catch(err => console.log(err));
+});
+
+// @route /api/users/update/password/:id
+// @desc Change password for a user
+// @access Public
+app.post('/update/password/:id', (req, res) => {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(req.body.password, salt, 1000, 64, `sha512`).toString(`hex`);
+    User.findByIdAndUpdate(req.params.id, {$set: {hash, salt}}, {new: true})
+    .then(user => {
+        user.hash = undefined;
+        user.salt = undefined;
+        res.json(user);
+    }).catch(err => res.json(err));
 });
 
 // @route /api/users/pokebox/:id
@@ -329,18 +341,6 @@ app.post('/battle/accept/:id', (req, res) => {
 // @access Public
 app.post('/update/email/:id', (req, res) => {
     User.findByIdAndUpdate(req.params.id, {$set: {email: req.body.email}}, {new: true})
-    .then(user => {
-        user.hash = undefined;
-        user.salt = undefined;
-        res.json(user);
-    }).catch(err => res.json(err));
-});
-
-// @route /api/users/update/password/:id
-// @desc Change password for a user
-// @access Public
-app.post('/update/password/:id', (req, res) => {
-    User.findByIdAndUpdate(req.params.id, {$set: {password: req.body.password}}, {new: true})
     .then(user => {
         user.hash = undefined;
         user.salt = undefined;
