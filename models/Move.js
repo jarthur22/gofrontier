@@ -8,7 +8,10 @@ const MoveSchema = new Schema({
     power: Number,
     energy: Number,
     energyGain: Number,
-    cooldown: Number
+    cooldown: Number,
+    buffs: [Number],
+    buffTarget: String,
+    buffApplyChance: String
 }, {collection: 'moves'});
 
 module.exports = Move = mongoose.model("moves", MoveSchema);
